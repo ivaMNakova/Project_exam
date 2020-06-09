@@ -1,9 +1,11 @@
 package com.example.project_exam;
 
-import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
+import android.widget.LinearLayout;
+import android.widget.TextView;
 
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -11,30 +13,50 @@ import java.util.ArrayList;
 
 public class MyRecyclerViewAdapter extends RecyclerView.Adapter<MyRecyclerViewAdapter.ViewHolder> {
 
+    public interface ItemClickListener {
+        void onItemClick(int position);
+    }
+
+    private ItemClickListener clickListener;
+
+    void setClickListener(ItemClickListener itemClickListener) {
+        this.clickListener = itemClickListener;
+    }
+
     private ArrayList<Cat> cats;
 
-    public MyRecyclerViewAdapter (Context context, ArrayList<Cat> cats) {
-        this.mInflater = LayoutInflater.from(context);
+    public MyRecyclerViewAdapter ( ArrayList<Cat> cats) {
         this.cats = cats;
     }
-    private LayoutInflater mInflater;
-    private ItemClickListener mClickListener;
-
 
     // inflates the row layout from xml when needed
     @Override
     public ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-        View view = mInflater.inflate(R.layout.activity_main, parent, false);
+        View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_cat, parent, false);
         return new ViewHolder(view);
     }
 
     // binds the data to the TextView in each row
     @Override
-    public void onBindViewHolder(ViewHolder holder, int position) {
+    public void onBindViewHolder(ViewHolder holder, final int position) {
 
-        Cat cat = cats.get(position);
-        holder.recyclerView.setText(cat);
-        holder.recyclerView(cats.getBreed());
+        final Cat cat = cats.get(position);
+        holder.catName.setText(cat.getName());
+        holder.catBreed.setText(cat.getBreed());
+        holder.actionButton.setVisibility(cat.getStatus() ? View.VISIBLE : View.INVISIBLE);
+        holder.actionButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                cats.remove(cat);
+                notifyDataSetChanged();
+            }
+        });
+        holder.root.setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View v) {
+                clickListener.onItemClick(position);
+            }
+        });
     }
 
     // total number of rows
@@ -45,37 +67,22 @@ public class MyRecyclerViewAdapter extends RecyclerView.Adapter<MyRecyclerViewAd
 
 
     // stores and recycles views as they are scrolled off screen
-    public class ViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
-        RecyclerView recyclerView;
+    public class ViewHolder extends RecyclerView.ViewHolder {
+        LinearLayout root;
+        TextView catName;
+        TextView catBreed;
+        Button actionButton;
 
         ViewHolder(View itemView) {
             super(itemView);
-
-            recyclerView = itemView.findViewById(R.id.recyclerView);
-            itemView.setOnClickListener(this);
-        }
-
-        public RecyclerView getName() { return recyclerView; }
-
-
-
-        @Override
-        public void onClick(View view) {
-            if (mClickListener != null) mClickListener.onItemClick(view, getAdapterPosition());
+            root = itemView.findViewById(R.id.root);
+            catName = itemView.findViewById(R.id.cat_name);
+            catBreed = itemView.findViewById(R.id.cat_breed);
+            actionButton = itemView.findViewById(R.id.cat_status);
         }
     }
 
-    // convenience method for getting data at click position
-    Cat getItem(int id) {
-        return cats.get(id);
-    }
 
-    void setClickListener(ItemClickListener itemClickListener) {
-        this.mClickListener = itemClickListener;
-    }
 
-    // parent activity will implement this method to respond to click events
-    public interface ItemClickListener {
-        void onItemClick(View view, int position);
-    }
+
 }
